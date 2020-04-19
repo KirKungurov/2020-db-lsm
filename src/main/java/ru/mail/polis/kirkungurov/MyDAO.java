@@ -1,4 +1,4 @@
-package ru.mail.polis.KirKungurov;
+package ru.mail.polis.kirkungurov;
 
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
@@ -11,11 +11,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class MyDAO implements DAO {
-    private SortedMap<ByteBuffer, ByteBuffer> map = new TreeMap<>();
+    private final SortedMap<ByteBuffer, ByteBuffer> map = new TreeMap<>();
 
     @NotNull
     @Override
-    public Iterator<Record> iterator(@NotNull ByteBuffer from) {
+    public Iterator<Record> iterator(@NotNull final ByteBuffer from) {
         return Iterators.transform(map
                         .tailMap(from)
                         .entrySet().iterator(),
@@ -24,12 +24,12 @@ public class MyDAO implements DAO {
     }
 
     @Override
-    public void upsert(@NotNull ByteBuffer key, @NotNull ByteBuffer value) {
+    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
         map.put(key, value);
     }
 
     @Override
-    public void remove(@NotNull ByteBuffer key) {
+    public void remove(@NotNull final ByteBuffer key) {
         map.remove(key);
     }
 

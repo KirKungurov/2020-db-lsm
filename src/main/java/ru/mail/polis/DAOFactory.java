@@ -17,7 +17,7 @@
 package ru.mail.polis;
 
 import org.jetbrains.annotations.NotNull;
-import ru.mail.polis.KirKungurov.MyDAO;
+import ru.mail.polis.kirkungurov.MyDAO;
 
 import java.io.File;
 
