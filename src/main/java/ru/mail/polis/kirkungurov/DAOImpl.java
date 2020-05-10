@@ -12,11 +12,15 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+import java.util.Comparator;
 
 public class DAOImpl implements DAO {
-    private static final Logger LOGGER = Logger.getLogger(DAOImpl.class.getName());
 
     private static final String SUFFIX = ".dat";
     private static final String TEMP = ".tmp";
@@ -32,6 +36,11 @@ public class DAOImpl implements DAO {
 
     private int generation;
 
+    /**
+     * DAO implementation
+     * @param storage - direction where SSTable stored
+     * @param tableByteSize amount of bytes which needed to memtable
+     */
     public DAOImpl(final File storage, final long tableByteSize) {
         this.storage = storage;
         this.tableByteSyze = tableByteSize;
@@ -39,35 +48,30 @@ public class DAOImpl implements DAO {
         this.ssTables = new TreeMap<>();
         this.generation = -1;
 
-        File[] list = storage.listFiles((dir1, name) -> name.endsWith(SUFFIX));
+        final File[] list = storage.listFiles((dir1, name) -> name.endsWith(SUFFIX));
         assert list != null;
-        LOGGER.info(String.valueOf(list.length) + " files found with suffix");
         Arrays.stream(list)
                 .filter(curFile -> !curFile.isDirectory())
                 .forEach(file -> {
-                    String name = file.getName();
-                    String nameWithoutSuf = name.substring(0, name.indexOf(SUFFIX));
+                    final String name = file.getName();
+                    final String nameWithoutSuf = name.substring(0, name.indexOf(SUFFIX));
                     if (nameWithoutSuf.matches("[0-9]+")) {
-                        int version = Integer.parseInt(nameWithoutSuf);
+                        final int version = Integer.parseInt(nameWithoutSuf);
                         generation = Math.max(generation, version);
                         try {
                             ssTables.put(version, new SSTable(file));
-                            LOGGER.info("Put this file into sstable " + file);
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
                     }
                 });
         generation++;
-        LOGGER.info("SSTable size: " + ssTables.size());
     }
 
     @NotNull
     @Override
-    public Iterator<Record> iterator(@NotNull ByteBuffer from) {
+    public Iterator<Record> iterator(@NotNull final ByteBuffer from) {
         final List<Iterator<Cell>> iterators = new ArrayList<>(ssTables.size() + 1);
-        LOGGER.info("Iterators count: " + iterators.size());
-        LOGGER.info("ssTables size: " + ssTables.size());
         iterators.add(memTable.iterator(from));
         ssTables.descendingMap().values().forEach(ssTable -> {
             try {
@@ -87,7 +91,7 @@ public class DAOImpl implements DAO {
     }
 
     @Override
-    public void upsert(@NotNull ByteBuffer key, @NotNull ByteBuffer value) throws IOException {
+    public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) throws IOException {
         memTable.upsert(key, value);
         if (memTable.size() >= tableByteSyze) {
             flush();
@@ -95,7 +99,7 @@ public class DAOImpl implements DAO {
     }
 
     @Override
-    public void remove(@NotNull ByteBuffer key) throws IOException {
+    public void remove(@NotNull final ByteBuffer key) throws IOException {
         memTable.remove(key);
         if (memTable.size() >= tableByteSyze) {
             flush();
@@ -107,15 +111,15 @@ public class DAOImpl implements DAO {
         if (memTable.size() >= 0) {
             flush();
         }
-        for (Table table : ssTables.values()) {
+        for (final Table table : ssTables.values()) {
             table.close();
         }
     }
 
     private void flush() throws IOException {
-        File file = new File(storage, generation + TEMP);
+        final File file = new File(storage, generation + TEMP);
         SSTable.serialize(file, memTable.iterator(ByteBuffer.allocate(0)));
-        File dst = new File(storage, generation + SUFFIX);
+        final File dst = new File(storage, generation + SUFFIX);
         Files.move(file.toPath(), dst.toPath(), StandardCopyOption.ATOMIC_MOVE);
 
         generation++;

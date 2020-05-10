@@ -9,10 +9,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class MemTable implements Table {
-//    private static final Logger LOGGER = Logger.getLogger(MemTable.class.getName());
 
     @NotNull
-    private SortedMap<ByteBuffer, Value> map;
+    private final SortedMap<ByteBuffer, Value> map;
     private long size;
 
     public MemTable() {
@@ -21,7 +20,7 @@ public class MemTable implements Table {
     }
 
     @Override
-    public Iterator<Cell> iterator(@NotNull ByteBuffer from) {
+    public Iterator<Cell> iterator(@NotNull final ByteBuffer from) {
         return map.tailMap(from)
                 .entrySet()
                 .stream()
@@ -31,7 +30,7 @@ public class MemTable implements Table {
 
     @Override
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
-        @Nullable Value oldValue = map.get(key);
+        @Nullable final Value oldValue = map.get(key);
         if (oldValue == null) {
             size += key.remaining() + value.remaining() + Long.BYTES;
         } else {
@@ -42,7 +41,7 @@ public class MemTable implements Table {
 
     @Override
     public void remove(@NotNull final ByteBuffer key) {
-        @Nullable Value oldValue = map.get(key);
+        @Nullable final Value oldValue = map.get(key);
         if (oldValue == null) {
             size += key.remaining() + Long.BYTES;
         } else if (!oldValue.isTombstone()) {
@@ -50,7 +49,6 @@ public class MemTable implements Table {
         }
         map.put(key.duplicate(), new Value(System.currentTimeMillis()));
     }
-
 
     @Override
     public long size() {

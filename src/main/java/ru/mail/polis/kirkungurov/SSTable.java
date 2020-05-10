@@ -11,13 +11,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class SSTable implements Table {
-//    private static final Logger LOGGER = Logger.getLogger(SSTable.class.getName());
-
 
     private final FileChannel fileChannel;
     private final long size;
     private final int count;
 
+    /**
+     * Create SSTable from file
+     * @param file from this file will be created SSTable
+     * @throws IOException if can't read file
+     */
     public SSTable(@NotNull final File file) throws IOException {
         fileChannel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
         final long fileSize = fileChannel.size() - Integer.BYTES;
@@ -45,7 +48,6 @@ public class SSTable implements Table {
                     return getCell(position++);
                 } catch (IOException e) {
                     return null;
-                    //throw new RuntimeException(e);
                 }
             }
         };
@@ -71,9 +73,6 @@ public class SSTable implements Table {
         return size;
     }
 
-    /**
-     * keySize|key|Timestamp|tombstone|valueSize|value
-     */
     public static void serialize(@NotNull final File file,
                                  @NotNull final Iterator<Cell> iterator) throws IOException {
         try (FileChannel fileWriter = FileChannel.open(
@@ -113,13 +112,13 @@ public class SSTable implements Table {
                 }
             }
 
-            for (Integer tmpOffset : offsets) {
+            for (final Integer tmpOffset : offsets) {
                 fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                         .putInt(tmpOffset)
                         .rewind());
             }
 
-            int count = offsets.size();
+            final int count = offsets.size();
             fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                     .putInt(count)
                     .rewind());
@@ -131,8 +130,8 @@ public class SSTable implements Table {
         int r = count - 1;
 
         while (l <= r) {
-            int m = (l + r) / 2;
-            int cmp = getKey(m).compareTo(from);
+            final int m = (l + r) / 2;
+            final int cmp = getKey(m).compareTo(from);
             if (cmp < 0) {
                 l = m + 1;
             } else if (cmp > 0) {
@@ -145,7 +144,7 @@ public class SSTable implements Table {
     }
 
     private int getOffset(final int num) throws IOException {
-        ByteBuffer tmp = ByteBuffer.allocate(Integer.BYTES);
+        final ByteBuffer tmp = ByteBuffer.allocate(Integer.BYTES);
         fileChannel.read(tmp, size + num * Integer.BYTES);
         return tmp.rewind().getInt();
     }
@@ -163,7 +162,7 @@ public class SSTable implements Table {
     @NotNull
     private Cell getCell(final int row) throws IOException {
         int offset = getOffset(row);
-        ByteBuffer key = getKey(row);
+        final ByteBuffer key = getKey(row);
 
         offset += Integer.BYTES + key.remaining();
         final ByteBuffer timestamp = ByteBuffer.allocate(Long.BYTES);
@@ -173,7 +172,7 @@ public class SSTable implements Table {
         if (timestamp.rewind().getLong() < 0) {
             return new Cell(key, new Value(-timestamp.rewind().getLong()));
         } else {
-            ByteBuffer valueSize = ByteBuffer.allocate(Integer.BYTES);
+            final ByteBuffer valueSize = ByteBuffer.allocate(Integer.BYTES);
             fileChannel.read(valueSize, offset);
             final ByteBuffer value = ByteBuffer.allocate(valueSize.rewind().getInt());
             offset += Integer.BYTES;
