@@ -13,19 +13,20 @@ import java.util.Iterator;
 public class SSTable implements Table {
 
     private final FileChannel fileChannel;
-    private final long size;
+    private final int size;
     private final int count;
 
     /**
      * Create SSTable from file
+     *
      * @param file from this file will be created SSTable
      * @throws IOException if can't read file
      */
-    public SSTable(@NotNull final File file) throws IOException {
+    SSTable(@NotNull final File file) throws IOException {
         fileChannel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
-        final long fileSize = fileChannel.size() - Integer.BYTES;
+        final int fileSize = (int)fileChannel.size() - Integer.BYTES;
         final ByteBuffer cellBuffer = ByteBuffer.allocate(Integer.BYTES);
-        this.fileChannel.read(cellBuffer, fileSize);
+        fileChannel.read(cellBuffer, fileSize);
         this.count = cellBuffer.rewind().getInt();
         this.size = fileSize - count * Integer.BYTES;
     }
@@ -73,6 +74,13 @@ public class SSTable implements Table {
         return size;
     }
 
+    /**
+     * Write current memtable to file
+     *
+     * @param file the file write membtable
+     * @param iterator table iterator
+     * @throws IOException if can't create new file
+     */
     public static void serialize(@NotNull final File file,
                                  @NotNull final Iterator<Cell> iterator) throws IOException {
         try (FileChannel fileWriter = FileChannel.open(
@@ -87,7 +95,8 @@ public class SSTable implements Table {
                 final ByteBuffer key = tmp.getKey();
                 final Value value = tmp.getValue();
                 final int keySize = key.remaining();
-                offset += keySize + Integer.BYTES + Long.BYTES;
+                //offset + keySize + ValueSize + Flag
+                offset += keySize + Integer.BYTES + Long.BYTES ;
                 fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                         .putInt(keySize)
                         .rewind());
@@ -97,28 +106,28 @@ public class SSTable implements Table {
                     fileWriter.write(ByteBuffer.allocate(Long.BYTES)
                             .putLong(-value.getTimestamp())
                             .rewind());
+
                 } else {
                     fileWriter.write(ByteBuffer.allocate(Long.BYTES)
                             .putLong(value.getTimestamp())
                             .rewind());
 
                     final ByteBuffer data = value.getData();
-                    final int valueSize = data.remaining();
-                    offset += valueSize;
+                    final int valueSize = data.capacity();
+                    //offset + valueSize
+                    offset += valueSize+Integer.BYTES;
                     fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                             .putInt(valueSize)
                             .rewind());
                     fileWriter.write(data);
                 }
             }
-
+            final int count = offsets.size();
             for (final Integer tmpOffset : offsets) {
                 fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                         .putInt(tmpOffset)
                         .rewind());
             }
-
-            final int count = offsets.size();
             fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                     .putInt(count)
                     .rewind());
@@ -151,12 +160,15 @@ public class SSTable implements Table {
 
     @NotNull
     private ByteBuffer getKey(final int row) throws IOException {
+        assert 0<= row && row <= count;
         final int offset = getOffset(row);
-        final ByteBuffer keySize = ByteBuffer.allocate(Integer.BYTES);
-        fileChannel.read(keySize, offset);
-        final ByteBuffer key = ByteBuffer.allocate(keySize.rewind().getInt());
+        final ByteBuffer keySizeBB = ByteBuffer.allocate(Integer.BYTES);
+        fileChannel.read(keySizeBB, offset);
+        final int keySize = keySizeBB.rewind().getInt();
+        final ByteBuffer key = ByteBuffer.allocate(keySize);
         fileChannel.read(key, offset + Integer.BYTES);
-        return key.rewind();
+        final ByteBuffer keyBB = key.rewind();
+        return keyBB;
     }
 
     @NotNull

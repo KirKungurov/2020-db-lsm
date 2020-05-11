@@ -17,8 +17,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
-import java.util.TreeMap;
 import java.util.Comparator;
+import java.util.TreeMap;
 
 public class DAOImpl implements DAO {
 
@@ -27,10 +27,10 @@ public class DAOImpl implements DAO {
 
     @NotNull
     private final File storage;
-    private final long tableByteSyze;
+    private final long tableByteSize;
 
     @NotNull
-    private final MemTable memTable;
+    private MemTable memTable;
     @NotNull
     private final NavigableMap<Integer, Table> ssTables;
 
@@ -38,12 +38,13 @@ public class DAOImpl implements DAO {
 
     /**
      * DAO implementation
+     *
      * @param storage - direction where SSTable stored
      * @param tableByteSize amount of bytes which needed to memtable
      */
     public DAOImpl(final File storage, final long tableByteSize) {
         this.storage = storage;
-        this.tableByteSyze = tableByteSize;
+        this.tableByteSize = tableByteSize;
         this.memTable = new MemTable();
         this.ssTables = new TreeMap<>();
         this.generation = -1;
@@ -92,18 +93,18 @@ public class DAOImpl implements DAO {
 
     @Override
     public void upsert(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) throws IOException {
-        memTable.upsert(key, value);
-        if (memTable.size() >= tableByteSyze) {
+        if (memTable.size() >= tableByteSize) {
             flush();
         }
+        memTable.upsert(key, value);
     }
 
     @Override
     public void remove(@NotNull final ByteBuffer key) throws IOException {
-        memTable.remove(key);
-        if (memTable.size() >= tableByteSyze) {
+        if (memTable.size() >= tableByteSize) {
             flush();
         }
+        memTable.remove(key);
     }
 
     @Override
@@ -122,8 +123,8 @@ public class DAOImpl implements DAO {
         final File dst = new File(storage, generation + SUFFIX);
         Files.move(file.toPath(), dst.toPath(), StandardCopyOption.ATOMIC_MOVE);
 
-        generation++;
+        memTable = new MemTable();
         ssTables.put(generation, new SSTable(dst));
-        memTable.close();
+        generation++;
     }
 }

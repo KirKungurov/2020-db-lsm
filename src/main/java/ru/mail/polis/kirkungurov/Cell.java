@@ -16,11 +16,6 @@ public class Cell implements Comparable<Cell> {
         this.value = value;
     }
 
-    public Cell(@NotNull final ByteBuffer key, @NotNull final ByteBuffer value) {
-        this.key = key;
-        this.value = new Value(value);
-    }
-
     @NotNull
     public ByteBuffer getKey() {
         return this.key;
@@ -28,7 +23,7 @@ public class Cell implements Comparable<Cell> {
 
     @NotNull
     public Value getValue() {
-        return this.value;
+        return value;
     }
 
     @Override
