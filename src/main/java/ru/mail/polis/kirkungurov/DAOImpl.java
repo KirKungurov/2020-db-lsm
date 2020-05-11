@@ -37,10 +37,10 @@ public class DAOImpl implements DAO {
     private int generation;
 
     /**
-     * DAO implementation
+     * DAO implementation.
      *
-     * @param storage       - direction where SSTable stored
-     * @param tableByteSize amount of bytes which needed to memtable
+     * @param storage - direction where SSTable stored
+     * @param tableByteSize - amount of bytes which needed to memtable
      */
     public DAOImpl(final File storage, final long tableByteSize) {
         this.storage = storage;

@@ -17,7 +17,7 @@ public class SSTable implements Table {
     private final int count;
 
     /**
-     * Create SSTable from file
+     * Create SSTable from file.
      *
      * @param file from this file will be created SSTable
      * @throws IOException if can't read file
@@ -75,7 +75,7 @@ public class SSTable implements Table {
     }
 
     /**
-     * Write current memtable to file
+     * Write current memtable to file.
      *
      * @param file     the file write membtable
      * @param iterator table iterator
@@ -167,8 +167,7 @@ public class SSTable implements Table {
         final int keySize = keySizeBB.rewind().getInt();
         final ByteBuffer key = ByteBuffer.allocate(keySize);
         fileChannel.read(key, offset + Integer.BYTES);
-        final ByteBuffer keyBB = key.rewind();
-        return keyBB;
+        return key.rewind();
     }
 
     @NotNull
