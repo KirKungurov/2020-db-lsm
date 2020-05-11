@@ -24,7 +24,7 @@ public class SSTable implements Table {
      */
     SSTable(@NotNull final File file) throws IOException {
         fileChannel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
-        final int fileSize = (int)fileChannel.size() - Integer.BYTES;
+        final int fileSize = (int) fileChannel.size() - Integer.BYTES;
         final ByteBuffer cellBuffer = ByteBuffer.allocate(Integer.BYTES);
         fileChannel.read(cellBuffer, fileSize);
         this.count = cellBuffer.rewind().getInt();
@@ -77,7 +77,7 @@ public class SSTable implements Table {
     /**
      * Write current memtable to file
      *
-     * @param file the file write membtable
+     * @param file     the file write membtable
      * @param iterator table iterator
      * @throws IOException if can't create new file
      */
@@ -96,7 +96,7 @@ public class SSTable implements Table {
                 final Value value = tmp.getValue();
                 final int keySize = key.remaining();
                 //offset + keySize + ValueSize + Flag
-                offset += keySize + Integer.BYTES + Long.BYTES ;
+                offset += keySize + Integer.BYTES + Long.BYTES;
                 fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                         .putInt(keySize)
                         .rewind());
@@ -115,7 +115,7 @@ public class SSTable implements Table {
                     final ByteBuffer data = value.getData();
                     final int valueSize = data.capacity();
                     //offset + valueSize
-                    offset += valueSize+Integer.BYTES;
+                    offset += valueSize + Integer.BYTES;
                     fileWriter.write(ByteBuffer.allocate(Integer.BYTES)
                             .putInt(valueSize)
                             .rewind());
@@ -160,7 +160,7 @@ public class SSTable implements Table {
 
     @NotNull
     private ByteBuffer getKey(final int row) throws IOException {
-        assert 0<= row && row <= count;
+        assert 0 <= row && row <= count;
         final int offset = getOffset(row);
         final ByteBuffer keySizeBB = ByteBuffer.allocate(Integer.BYTES);
         fileChannel.read(keySizeBB, offset);

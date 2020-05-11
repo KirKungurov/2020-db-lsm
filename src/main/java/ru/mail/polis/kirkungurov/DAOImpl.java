@@ -14,10 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
-import java.util.Comparator;
 import java.util.TreeMap;
 
 public class DAOImpl implements DAO {
@@ -39,7 +39,7 @@ public class DAOImpl implements DAO {
     /**
      * DAO implementation
      *
-     * @param storage - direction where SSTable stored
+     * @param storage       - direction where SSTable stored
      * @param tableByteSize amount of bytes which needed to memtable
      */
     public DAOImpl(final File storage, final long tableByteSize) {
