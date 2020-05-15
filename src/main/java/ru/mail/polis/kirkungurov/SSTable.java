@@ -48,7 +48,7 @@ public class SSTable implements Table {
                 try {
                     return getCell(position++);
                 } catch (IOException e) {
-                    return null;
+                    throw new RuntimeException(e);
                 }
             }
         };

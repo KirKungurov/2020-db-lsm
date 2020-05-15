@@ -40,11 +40,11 @@ public class Value implements Comparable<Value> {
 
     @Nullable
     public ByteBuffer getData() {
-        return this.data;
+        return data;
     }
 
     @Override
     public int compareTo(@NotNull final Value o) {
-        return -Long.compare(this.timestamp, o.getTimestamp());
+        return -Long.compare(timestamp, o.getTimestamp());
     }
 }

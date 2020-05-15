@@ -18,7 +18,7 @@ public class Cell implements Comparable<Cell> {
 
     @NotNull
     public ByteBuffer getKey() {
-        return this.key;
+        return key;
     }
 
     @NotNull
