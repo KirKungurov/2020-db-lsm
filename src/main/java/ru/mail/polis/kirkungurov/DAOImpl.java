@@ -117,6 +117,31 @@ public class DAOImpl implements DAO {
         }
     }
 
+    @Override
+    public void compact() throws IOException {
+        final Iterator<Cell> iterator = cellIterator(ByteBuffer.allocate(0));
+        final File file = new File(storage, generation + TEMP);
+        SSTable.serialize(file, iterator);
+        for (int i = 0; i<generation; i++){
+            Files.delete(new File(storage, i + SUFFIX).toPath());
+        }
+        final File dst = new File(storage, generation + SUFFIX);
+        Files.move(file.toPath(), dst.toPath(), StandardCopyOption.ATOMIC_MOVE);
+        memTable = new MemTable();
+        ssTables.put(generation, new SSTable(dst));
+        generation++;
+    }
+
+    private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
+        final List<Iterator<Cell>> iterators = new ArrayList<>(generation+1);
+        for (final Table table: ssTables.values()) {
+            iterators.add(table.iterator(from));
+        }
+        iterators.add(memTable.iterator(from));
+        final Iterator<Cell> merged = Iterators.mergeSorted(iterators, Cell::compareTo);
+        return Iters.collapseEquals(merged, Cell::getKey);
+    }
+
     private void flush() throws IOException {
         final File file = new File(storage, generation + TEMP);
         SSTable.serialize(file, memTable.iterator(ByteBuffer.allocate(0)));
