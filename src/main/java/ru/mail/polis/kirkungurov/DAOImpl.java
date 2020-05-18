@@ -122,7 +122,7 @@ public class DAOImpl implements DAO {
         final Iterator<Cell> iterator = cellIterator(ByteBuffer.allocate(0));
         final File file = new File(storage, generation + TEMP);
         SSTable.serialize(file, iterator);
-        for (int i = 0; i<generation; i++){
+        for (int i = 0; i < generation; i++) {
             Files.delete(new File(storage, i + SUFFIX).toPath());
         }
         final File dst = new File(storage, generation + SUFFIX);
@@ -133,8 +133,8 @@ public class DAOImpl implements DAO {
     }
 
     private Iterator<Cell> cellIterator(@NotNull final ByteBuffer from) throws IOException {
-        final List<Iterator<Cell>> iterators = new ArrayList<>(generation+1);
-        for (final Table table: ssTables.values()) {
+        final List<Iterator<Cell>> iterators = new ArrayList<>(generation + 1);
+        for (final Table table : ssTables.values()) {
             iterators.add(table.iterator(from));
         }
         iterators.add(memTable.iterator(from));
