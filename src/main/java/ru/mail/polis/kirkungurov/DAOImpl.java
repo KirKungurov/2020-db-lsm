@@ -24,6 +24,7 @@ public class DAOImpl implements DAO {
 
     private static final String SUFFIX = ".dat";
     private static final String TEMP = ".tmp";
+    private static final int MAX_FILES_COUNT = 50;
 
     @NotNull
     private final File storage;
@@ -122,7 +123,7 @@ public class DAOImpl implements DAO {
         final Iterator<Cell> iterator = cellIterator(ByteBuffer.allocate(0));
         final File file = new File(storage, generation + TEMP);
         SSTable.serialize(file, iterator);
-        for (int i = 0; i < generation; i++) {
+        for (int i = 0; i < ssTables.size(); i++) {
             Files.delete(new File(storage, i + SUFFIX).toPath());
         }
         generation = 0;
@@ -151,6 +152,9 @@ public class DAOImpl implements DAO {
 
         memTable = new MemTable();
         ssTables.put(generation, new SSTable(dst));
+        if (ssTables.size() > MAX_FILES_COUNT) {
+            compact();
+        }
         generation++;
     }
 }
